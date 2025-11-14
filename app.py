@@ -73,7 +73,7 @@ def post_message():
     message = request.form["message"]
 
     connection = psycopg.connect(POSTGRES_URL)
-    cursor = connection.cursor
+    cursor = connection.cursor()
     cursor.execute("INSERT INTO messages (message) VALUES (%s);", (message,))
     connection.commit()
 
