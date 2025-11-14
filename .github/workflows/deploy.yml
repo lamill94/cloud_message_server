@@ -1,0 +1,53 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    # "environment" must match the name of your GitHub environment
+    environment: prod
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Copy app to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: "ec2-user"
+          port: 22
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "./Dockerfile, ./app.py, ./requirements.txt"
+          target: ~/message-server
+
+      - name: Build and run on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: "ec2-user"
+          port: 22
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd ~/message-server
+            docker build --pull -t message-server:latest .
+            docker stop message-server || true
+            docker rm message-server || true
+            docker image prune -f || true
+            docker run -d \
+              --name message-server \
+              --restart unless-stopped \
+              -p 5002:5002 \
+              -e APP_ENV=PRODUCTION \
+              -e POSTGRES_USER='${{ secrets.POSTGRES_USER }}' \
+              -e POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}' \
+              -e POSTGRES_HOST='${{ secrets.POSTGRES_HOST }}' \
+              -e POSTGRES_DB='postgres' \
+              message-server:latest
+
+
+          
