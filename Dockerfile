@@ -23,5 +23,5 @@ RUN pip install -r requirements.txt
 # At this point we've set up our virtual computer, but we've not yet run our application (and we're not going to!)
 # We're just setting up the container so that it's ready to do so when we tell it
 
-# So we're going to tell Docker here that we *do* want to run it, this is what it should run:
+# So we're going to tell Docker here that when we *do* want to run it, this is what it should run:
 CMD ["python", "app.py"]
